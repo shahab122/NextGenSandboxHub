@@ -208,7 +208,7 @@ class DDS:
                 json.dump(realization, f, indent=4)
 
             # Run hydrology only
-            tile_sandbox_config = os.path.join(cfg.project_root, "configs", f"sandbox_config_tile{tile_idx+1}.yaml")
+            tile_sandbox_config = os.path.join(os.environ.get("CONFIG_DIR", os.path.join(cfg.project_root, "configs")), f"sandbox_config_tile{tile_idx+1}.yaml")
             subprocess.call(
                 ["python", sandbox_path, "-i", tile_sandbox_config, "-run", "--gage_id", self.gage_id],
                 cwd=tile_root

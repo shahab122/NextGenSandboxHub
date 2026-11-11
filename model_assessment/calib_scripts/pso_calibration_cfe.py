@@ -378,7 +378,7 @@ def objective_function_tiled(args):
             json.dump(realization, f, indent=4)
 
         # Run hydrology only (skip routing)
-        tile_sandbox_config = os.path.join(cfg.project_root, "configs", f"sandbox_config_tile{tile_idx+1}.yaml")
+        tile_sandbox_config = os.path.join(os.environ.get("CONFIG_DIR", os.path.join(cfg.project_root, "configs")), f"sandbox_config_tile{tile_idx+1}.yaml")
         subprocess.call(
             ["python", sandbox_path, "-i", tile_sandbox_config, "-run", "--gage_id", gage_id],
             cwd=tile_root
@@ -653,7 +653,7 @@ class PSO:
                 json.dump(realization, f, indent=4)
 
             # Run hydrology only
-            tile_sandbox_config = os.path.join(cfg.project_root, "configs", f"sandbox_config_tile{tile_idx+1}.yaml")
+            tile_sandbox_config = os.path.join(os.environ.get("CONFIG_DIR", os.path.join(cfg.project_root, "configs")), f"sandbox_config_tile{tile_idx+1}.yaml")
             subprocess.call(
                 ["python", sandbox_path, "-i", tile_sandbox_config, "-run", "--gage_id", self.gage_id],
                 cwd=tile_root
@@ -1264,7 +1264,7 @@ if __name__ == "__main__":
 #                         print(f"[WARN] Could not delete {file_path}: {e}")
 
 #         # === Use TILE-SPECIFIC sandbox config ===
-#         tile_sandbox_config = os.path.join(cfg.project_root, "configs", f"sandbox_config_tile{tile_idx+1}.yaml")
+#         tile_sandbox_config = os.path.join(os.environ.get("CONFIG_DIR", os.path.join(cfg.project_root, "configs")), f"sandbox_config_tile{tile_idx+1}.yaml")
 
 #         subprocess.call(
 #             ["python", sandbox_path, "-i", tile_sandbox_config, "-run", "--gage_id", gage_id],
@@ -1519,7 +1519,7 @@ if __name__ == "__main__":
 #                             print(f"[WARN] Could not delete {file_path}: {e}")
 
 #             # === TILE-SPECIFIC sandbox config ===
-#             tile_sandbox_config = os.path.join(cfg.project_root, "configs", f"sandbox_config_tile{tile_idx+1}.yaml")
+#             tile_sandbox_config = os.path.join(os.environ.get("CONFIG_DIR", os.path.join(cfg.project_root, "configs")), f"sandbox_config_tile{tile_idx+1}.yaml")
 
 #             print(f"[INFO] Running gage {self.gage_id} | FINAL | Tile {tile_idx}")
 
@@ -2016,7 +2016,7 @@ if __name__ == "__main__":
 #                         print(f"[WARN] Could not delete {file_path}: {e}")
 
 #         # === Use TILE-SPECIFIC sandbox config ===
-#         tile_sandbox_config = os.path.join(cfg.project_root, "configs", f"sandbox_config_tile{tile_idx+1}.yaml")
+#         tile_sandbox_config = os.path.join(os.environ.get("CONFIG_DIR", os.path.join(cfg.project_root, "configs")), f"sandbox_config_tile{tile_idx+1}.yaml")
 
 #         subprocess.call(
 #             ["python", sandbox_path, "-i", tile_sandbox_config, "-run", "--gage_id", gage_id],
@@ -2268,7 +2268,7 @@ if __name__ == "__main__":
 #                             print(f"[WARN] Could not delete {file_path}: {e}")
 
 #             # === TILE-SPECIFIC sandbox config ===
-#             tile_sandbox_config = os.path.join(cfg.project_root, "configs", f"sandbox_config_tile{tile_idx+1}.yaml")
+#             tile_sandbox_config = os.path.join(os.environ.get("CONFIG_DIR", os.path.join(cfg.project_root, "configs")), f"sandbox_config_tile{tile_idx+1}.yaml")
 
 #             print(f"[INFO] Running gage {self.gage_id} | FINAL | Tile {tile_idx}")
 

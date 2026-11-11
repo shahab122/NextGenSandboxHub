@@ -33,8 +33,8 @@ np.random.seed(42)
 random.seed(42)
 
 # === CONFIG ===
-n_iterations = 2
-max_cores_for_gages = 2  # Adjust as needed
+n_iterations = int(__import__("os").environ.get("N_ITER", 25))
+max_cores_for_gages = int(__import__("os").environ.get("MAX_CORES", 3))
 project_root = cfg.project_root
 observed_q_root = cfg.observed_q_root
 logging_dir = cfg.logging_dir
@@ -78,6 +78,25 @@ class DDS:
         # param_names = [f"param_{i}" for i in range(num_params)]
         log_rows = []
         log_path = os.path.join(logging_dir, f"{self.gage_id}.csv")
+        _resume = None
+        if os.environ.get("RESUME", "0") == "1" and os.path.exists(log_path):
+            try:
+                _old = pd.read_csv(log_path)
+                _kcol = f"{self.metric_to_calibrate_on}_calibration"
+                if (_old["iteration"].astype(str) == "final").any():
+                    print(f"Gage {self.gage_id}: already complete, skipping.")
+                    return self.best_position, self.best_value, 0
+                _num = _old[pd.to_numeric(_old["iteration"], errors="coerce").notna()].copy()
+                if len(_num) > 1:
+                    _num["iteration"] = _num["iteration"].astype(int)
+                    _ib = _num[_kcol].astype(float).idxmax()
+                    _resume = dict(rows=_num.to_dict("records"), last=int(_num["iteration"].max()),
+                                   pos=np.array([_num.loc[_ib, _n] for _n in self.param_names], dtype=float),
+                                   val=-float(_num.loc[_ib, _kcol]), kge=float(_num.loc[_ib, _kcol]))
+                    print(f"Gage {self.gage_id}: resuming after iteration {_resume['last']} (best so far {_resume['kge']:.4f})")
+            except Exception as _e:
+                print(f"Gage {self.gage_id}: could not read old log ({_e}); starting fresh")
+                _resume = None
         os.makedirs(os.path.dirname(log_path), exist_ok=True)
         start_time = datetime.now()
 
@@ -105,7 +124,13 @@ class DDS:
         log_rows.append(row)
         pd.DataFrame(log_rows).to_csv(log_path, index=False)
 
-        for iteration in range(1, self.n_iterations + 1):
+        start_iter = 1
+        if _resume is not None:
+            self.best_position = _resume["pos"]; self.best_value = _resume["val"]
+            best_cal_metrics = {self.metric_to_calibrate_on: _resume["kge"]}
+            log_rows = _resume["rows"]; start_iter = _resume["last"] + 1
+            pd.DataFrame(log_rows).to_csv(log_path, index=False)
+        for iteration in range(start_iter, self.n_iterations + 1):
             print(f"\n--- DDS Iteration {iteration} for gage {self.gage_id} ---")
             clear_terminal()
 

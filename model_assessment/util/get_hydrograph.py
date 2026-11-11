@@ -68,7 +68,7 @@ def get_nexus_id(gage_id, summary_csv):
 
 
 # === Step 2: Extract flow time series from NetCDF for specific nexus ===
-def extract_nexus_flow(netcdf_path, nexus_id):
+def extract_nexus_flow_old(netcdf_path, nexus_id):
     ds = xr.open_dataset(netcdf_path)
     
     if "flow" not in ds or "feature_id" not in ds.coords:
@@ -85,6 +85,26 @@ def extract_nexus_flow(netcdf_path, nexus_id):
     df = flow.reset_index().rename(columns={"time": "current_time", "flow": "flow"})
     return df
 
+def get_wb_ids(gage_id, summary_csv):
+    import pandas as pd
+    df = pd.read_csv(summary_csv, dtype=str)
+    v = df.loc[df["gage_id"] == gage_id, "wbs_into_that_nexus"].iloc[0]
+    if not isinstance(v, str):
+        return []
+    return [int(x.strip().replace("wb-", "")) for x in v.split(",") if x.strip().startswith("wb-")]
+
+def extract_outlet_flow(netcdf_path, nexus_id, wb_ids):
+    ds = xr.open_dataset(netcdf_path)
+    fids = ds["feature_id"].values
+    if nexus_id in fids:   # downstream flowpath of the outlet nexus is in the t-route output
+        return extract_nexus_flow_old(netcdf_path, nexus_id)
+    present = [w for w in wb_ids if w in fids]
+    if not wb_ids or len(present) != len(wb_ids):
+        raise ValueError(f" Neither nexus {nexus_id} nor all inflow wbs {wb_ids} found in t-route output.")
+    flow = ds["flow"].sel(feature_id=present).sum("feature_id").to_series()
+    flow.name = "flow"
+    return flow.reset_index().rename(columns={"time": "current_time"})
+
 # === MAIN EXECUTION ===
 try:
     netcdf_files = [f for f in os.listdir(troute_dir) if f.endswith(".nc")]
@@ -95,7 +115,7 @@ try:
 
     netcdf_path = os.path.join(troute_dir, netcdf_files[0])
     nexus_id = get_nexus_id(gage_id, summary_csv)
-    flow_df = extract_nexus_flow(netcdf_path, nexus_id)
+    flow_df = extract_outlet_flow(netcdf_path, nexus_id, get_wb_ids(gage_id, summary_csv))
     flow_df.to_csv(output_csv, index=False)
     print(f" Saved nexus flow time series to: {output_csv}")
 

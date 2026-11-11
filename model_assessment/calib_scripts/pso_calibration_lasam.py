@@ -257,7 +257,7 @@ def objective_function_tiled(args, metric_to_calibrate_on="kge", base_roots=None
             # Run hydrology only (divide scale)
             subprocess.call([
                 "python", sandbox_path,
-                "-i", os.path.join(cfg.project_root, "configs", f"sandbox_config_tile{tile+1}.yaml"),
+                "-i", os.path.join(os.environ.get("CONFIG_DIR", os.path.join(cfg.project_root, "configs")), f"sandbox_config_tile{tile+1}.yaml"),
                 "-run",
                 "--gage_id", gage_id
             ], cwd=tile_root)
